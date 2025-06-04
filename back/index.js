@@ -47,14 +47,27 @@ app.post('/login', async (req, res) => {
 })
 app.get('/profile', async (req, res) => { // info de l'utilisateur
     let token = req.headers.authorization
-    if (token !== "") {
-        token.substring(7)
-        console.log(jwt.verify(token,"JWT_SECRET"))
-        if (jwt.verify(token,"JWT_SECRET")){
-            
+    let verif 
+    try {
+        let shorttoken = token.substring(7)
+        verif = jwt.verify(shorttoken,"JWT_SECRET")
+        if (verif){
+            let dbdata = await pool.query(`select id, email, password from Users where Users.id = $1 and Users.email = $2 limit 1`, [verif.id, verif.email])
+            if (dbdata.rowCount <=0) {res.status(404).json({message:"not found"})}
+            res.status(200).json({
+                id: dbdata.rows[0].id,
+                email: dbdata.rows[0].email,
+                password: dbdata.rows[0].password
+            });
         }
+        else {
+            res.status(401).json({message:"Unauthorized"})
+        }
+    } catch (error) {
+        res.status(401).json({message:"Unauthorized"})
     }
-    await pool.query('SELECT * FROM Users WHERE Users.email = a')
+    
+    
 })
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
