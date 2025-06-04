@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form>
+        <label for="txt">email</label>
+        <input type="text" id="txt" value="john.john@john.john">
+        <label for="pwd">mot de passe</label>
+        <input type="password" id="pwd">
+        <button id="submit">Connexion</button>
+    </form>
+</body>
+</html>
+
+
+<script>
+    let res = ""
+    document.getElementById("submit").addEventListener("click",async function(e){
+        e.preventDefault();
+        const pwd = document.getElementById("pwd").value
+        const email = document.getElementById("txt").value
+        const body = {
+            "email":email,
+            "password":pwd
+        }
+        let header = new Headers();
+        header.append("Content-Type","application/json")
+        const result = await fetch('https://b3-api-gw5z.onrender.com/auth/login', {
+            method:'post',
+            headers:header,
+            body: JSON.stringify(body)
+        })
+        res = await result.json()
+        if (!result.ok){
+            document.getElementsByTagName("body")[0].appendChild(document.createElement("p"))
+            document.getElementsByTagName("p")[0].textContent = "dégage !!!!!!!!!!!!!!!"
+        }
+        else{
+            localStorage.setItem("token",res.access_token)
+            window.location="./home.html"
+        }
+    });
+</script>

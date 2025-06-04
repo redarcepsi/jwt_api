@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body id="body">
+    
+</body>
+</html>
+<script>
+    async function getdata() {
+        let header = new Headers();
+        header.append("Authorization",`Bearer ${localStorage.getItem("token")}`)
+        const result = await fetch('https://b3-api-gw5z.onrender.com/auth/profile', {
+            method:'get',
+            headers:header
+        })
+        if (!result.ok){window.location="./connexion.html"}
+        let res = await result.json();
+        const tableau = Object.keys(res)
+        const page = document.getElementById("body");
+        tableau.forEach(element => {
+            let p = document.createElement("p");
+            p.innerHTML = `${element} = ${res[element]}`
+            page.appendChild(p)
+        });
+    }
+    getdata()
+</script>
+<!-- john.john@john.john -->
