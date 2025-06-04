@@ -11,7 +11,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.send('Hello World! test')
 })
-app.post('/register', async (req, res) => {
+app.post('/register', async (req, res) => { // méthode d'inscription
     let id = uuidv4();
     const {email, password} = req.body;
     let emailFormat = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
@@ -30,7 +30,7 @@ app.post('/register', async (req, res) => {
         res.status(400).json({message:"Bad request"});
     }
 })
-app.post('/login', async (req, res) => {
+app.post('/login', async (req, res) => { // connexion, retourne un token jwt
     const {email, password} = req.body;
     let emailFormat = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
     if (typeof(email)==="string" && typeof(password)==="string" && email.match(emailFormat)) {
@@ -45,7 +45,7 @@ app.post('/login', async (req, res) => {
         res.status(400).json({message:"Bad request"});
     }
 })
-app.get('/profile', async (req, res) => { // info de l'utilisateur
+app.get('/profile', async (req, res) => { // obtenir les informations utilisateurs
     let token = req.headers.authorization
     let verif 
     try {
@@ -66,14 +66,12 @@ app.get('/profile', async (req, res) => { // info de l'utilisateur
     } catch (error) {
         res.status(401).json({message:"Unauthorized"})
     }
-    
-    
 })
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
 
-app.get('/articles', async (req, res) => {
+app.get('/articles', async (req, res) => { // obtenir tous les articles
     let articles = {}
     let dbdata = await pool.query(`select id, auteur, titre, contenu, datePubli from Articles`)
     if (dbdata.rowCount <=0) {res.status(404).json({message:"not found"})}
@@ -88,7 +86,7 @@ app.get('/articles', async (req, res) => {
     res.status(200).json({message:articles})
 });
 
-app.get('/articles/:id', async (req, res) => { // info de l'utilisateur
+app.get('/articles/:id', async (req, res) => { // obtenir 1 article précis
     let dbdata = await pool.query(`select id, auteur, titre, contenu, datePubli from Articles where Articles.id=$1`,[req.params.id])
     if (dbdata.rowCount <=0) {res.status(404).json({message:"not found"})}
     res.status(200).json({
@@ -99,3 +97,31 @@ app.get('/articles/:id', async (req, res) => { // info de l'utilisateur
         datepubli: dbdata.rows[0].datepubli,
     });
 });
+
+app.post('/articles', async (req, res) => {
+    let idpubli = uuidv4();
+    let token = req.headers.authorization
+    const {titre, contenu,datepubli} = req.body;
+    let verif 
+    try {
+        let shorttoken = token.substring(7)
+        verif = jwt.verify(shorttoken,"JWT_SECRET")
+        if (verif){
+            try {
+                let dbdata = await pool.query(`INSERT INTO Articles(id,auteur,titre,contenu,datePubli) VALUES ($1,$2,$3,$4,$5)`, [idpubli, verif.id,titre,contenu,datepubli])
+                res.status(201).json({message:"Article created"});
+            }catch (error) {
+                if (error.message.includes("duplicate key value violates unique")){
+                    res.status(409).json({message:"Article déjà existant"})
+                }else{
+                    res.status(400).json({message:"Bad request"});
+                }
+            }
+        }
+        else {
+            res.status(401).json({message:"Unauthorized"})
+        }
+    } catch (error) {
+        res.status(401).json({message:"Unauthorized"})
+    }
+})
